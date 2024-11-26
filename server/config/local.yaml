@@ -1,4 +1,10 @@
-storage_path: ""
+storage: 
+  Host: "localhost"
+  Port: "5432"
+  User: "postgres"
+  Password: "1"
+  DBName: "User"
+  SSLMode: "disable"
 http_server:
   address: "localhost:8088"
   timeout: 4s

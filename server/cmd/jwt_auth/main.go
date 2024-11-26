@@ -1,10 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
+	"os"
 
 	"jwt-auth/server/internal/config"
+	"jwt-auth/server/internal/repository"
+	"jwt-auth/server/internal/routes"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
@@ -19,12 +21,20 @@ func main() {
 
 	// TODO: init storage
 
+	storage, err := repository.InitDB(repository.Config(cfg.Storage))
+	if err != nil {
+		log.Error("failed to init storage", err)
+		os.Exit(1)
+	}
+	_ = storage
+
+	log.Info("starting storage")
+
 	// TODO: init router
 
 	router := chi.NewRouter()
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, you've requested: %s\n", r.URL.Path)
-	})
+	routes.RegisterUserRoutes(router, storage)
+
 	// TODO: run server
 
 	log.Info("starting server, address: http://", cfg.Address)

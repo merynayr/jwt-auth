@@ -1,18 +1,28 @@
 package config
 
 import (
-	"log"
 	"os"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
+var log = logrus.New()
+
 type Config struct {
-	StoragePath string `yaml:"storage_path" env-required:"false"`
-	HTTPServer  `yaml:"http_server"`
+	Storage    `yaml:"storage"`
+	HTTPServer `yaml:"http_server"`
 }
 
+type Storage struct {
+	Host     string `yaml:"Host" env-default:"localhost"`
+	Port     string `yaml:"Port" env-default:"5432"`
+	User     string `yaml:"User" env-default:"postgres"`
+	Password string `yaml:"Password" env-default:"1"`
+	DBName   string `yaml:"DBName" env-default:"User"`
+	SSLMode  string `yaml:"SSLMode"  env-default:"disable"`
+}
 type HTTPServer struct {
 	Address     string        `yaml:"address" env-default:"localhost:8088"`
 	Timeout     time.Duration `yaml:"timeout" env-default:"4s"`
