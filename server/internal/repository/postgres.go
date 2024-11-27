@@ -5,8 +5,15 @@ import (
 
 	"database/sql"
 
+	"errors"
+
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
+)
+
+var (
+	ErrNotFound = errors.New("object not found")
+	ErrExists   = errors.New("ogject exists")
 )
 
 var log = logrus.New()

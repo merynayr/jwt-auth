@@ -1,6 +1,8 @@
 package repository
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type User struct {
 	Email    string
@@ -8,10 +10,10 @@ type User struct {
 }
 
 func (db *Storage) Select() ([]User, error) {
-	const op = "Select Users"
+	const op = "Repository.Select.Users"
 	users := []User{}
 	log.Info("Select")
-	query := "SELECT * FROM \"Users\""
+	query := `SELECT * FROM "Users"`
 	rows, err := db.db.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -31,4 +33,17 @@ func (db *Storage) Select() ([]User, error) {
 	}
 
 	return users, nil
+}
+
+func (db *Storage) Registration(user User) (string, error) {
+	const op = "Registration.User"
+	query := `INSERT INTO "Users" ("Email", "Password") VALUES ($1, $2) RETURNING "Email";`
+
+	var email string
+	err := db.db.QueryRow(query, user.Email, user.Password).Scan(&email)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, ErrExists)
+	}
+
+	return email, nil
 }

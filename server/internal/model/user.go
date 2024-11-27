@@ -3,7 +3,7 @@ package model
 import "github.com/golang-jwt/jwt"
 
 type Token struct {
-	UserId uint
+	Email string `json:"email"`
 	jwt.StandardClaims
 }
 type User struct {
