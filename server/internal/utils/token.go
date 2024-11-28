@@ -1,12 +1,29 @@
 package utils
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type Manager struct {
+	JWT_ACCESS_SECRET  string
+	JWT_REFRESH_SECRET string
+}
+
+func NewToken(JWT_REFRESH_SECRET, JWT_ACCESS_SECRET string) (*Manager, error) {
+	const op = "utils.manager.NewManager"
+
+	if JWT_ACCESS_SECRET == "" && JWT_REFRESH_SECRET != "" {
+		return nil, fmt.Errorf("%s: %s", op, "empty secret string")
+	}
+
+	return &Manager{JWT_ACCESS_SECRET: JWT_ACCESS_SECRET, JWT_REFRESH_SECRET: JWT_REFRESH_SECRET}, nil
+}
 
 type Token struct {
 	Email string
@@ -19,7 +36,7 @@ type Data struct {
 	TTL   time.Duration
 }
 
-func GenerateToken(data Data, secretKey string) (string, error) {
+func (m *Manager) GenerateToken(data Data, secretKey string) (string, error) {
 	claims := Token{
 		Email: data.Email,
 		StandardClaims: jwt.StandardClaims{
@@ -38,18 +55,24 @@ func GenerateToken(data Data, secretKey string) (string, error) {
 	return tokenString, nil
 }
 
-func HashToken(token string) ([]byte, error) {
-	const op = "auth.manager.HashToken"
+func (m *Manager) HashToken(token string) ([]byte, error) {
+	// const op = "auth.manager.HashToken"
 
-	hashedToken, err := bcrypt.GenerateFromPassword([]byte(token), bcrypt.DefaultCost)
-	if err != nil {
-		return []byte{}, fmt.Errorf("%s: %w", op, err)
-	}
+	// hashedToken, err := bcrypt.GenerateFromPassword([]byte(token), 3)
+	// if err != nil {
+	// 	return []byte{}, fmt.Errorf("%s: %w", op, err)
+	// }
 
-	return hashedToken, nil
+	// return hashedToken, nil
+
+	// Хешируем токен с использованием SHA-256, так как токен получается больше 72 байт
+	hash := sha256.Sum256([]byte(token))
+	hashedToken := hex.EncodeToString(hash[:])
+
+	return []byte(hashedToken), nil
 }
 
-func CompareTokens(providedToken string, hashedToken []byte) bool {
+func (m *Manager) CompareTokens(providedToken string, hashedToken []byte) bool {
 	err := bcrypt.CompareHashAndPassword(hashedToken, []byte(providedToken))
 
 	return err == nil

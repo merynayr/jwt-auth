@@ -6,18 +6,17 @@ import (
 
 	"jwt-auth/server/internal/repository"
 	"jwt-auth/server/internal/routes/handlers"
+	"jwt-auth/server/internal/service"
 
 	"github.com/go-chi/chi/v5"
 )
 
-var RegisterUserRoutes = func(router *chi.Mux, storage *repository.Storage) {
+var RegisterUserRoutes = func(router *chi.Mux, storage *repository.Storage, service *service.Auth) {
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, you've requested: %s\n", r.URL.Path)
 	})
 
 	router.Get("/user", handlers.GetUser(storage))
-	router.Post("/registration", handlers.Registration(storage, storage))
-	// router.Post("/login")
-	// router.Post("/resieve", handlers.Recieve(storage))
-	// router.Get("/login")
+	router.Post("/api/Registration", handlers.Registration(storage, service))
+	router.Post("/api/Auth", handlers.SignIn(service))
 }

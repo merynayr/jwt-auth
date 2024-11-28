@@ -7,6 +7,8 @@ import (
 	"jwt-auth/server/internal/config"
 	"jwt-auth/server/internal/repository"
 	"jwt-auth/server/internal/routes"
+	"jwt-auth/server/internal/service"
+	"jwt-auth/server/internal/utils"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
@@ -30,9 +32,15 @@ func main() {
 	log.Info("starting storage")
 
 	// TODO: init router
+	tokenManager, err := utils.NewToken(cfg.JWT_ACCESS_SECRET, cfg.JWT_REFRESH_SECRET)
+	if err != nil {
+		log.Error("failed to init auth: ", err)
+		os.Exit(1)
+	}
 
+	service, err := service.New(cfg, storage, tokenManager)
 	router := chi.NewRouter()
-	routes.RegisterUserRoutes(router, storage)
+	routes.RegisterUserRoutes(router, storage, service)
 
 	// TODO: run server
 
