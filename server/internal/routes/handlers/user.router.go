@@ -10,6 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
 
+	"jwt-auth/server/internal/config"
 	"jwt-auth/server/internal/repository"
 	resp "jwt-auth/server/internal/utils"
 )
@@ -30,6 +31,11 @@ type IUser interface {
 	Registration(user repository.User) (string, error)
 }
 
+type IToken interface {
+	InsertToken(token repository.Token) error
+	GetToken(email string) (*repository.Token, error)
+}
+
 func GetUser(user IUser) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "Handler.Select.Users "
@@ -45,7 +51,7 @@ func GetUser(user IUser) http.HandlerFunc {
 	}
 }
 
-func Registration(user IUser) http.HandlerFunc {
+func Registration(user IUser, token IToken) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "Handler.Registration.Users"
 
@@ -74,6 +80,30 @@ func Registration(user IUser) http.HandlerFunc {
 			return
 		}
 
+		ip := r.RemoteAddr
+		cfg := config.MustLoad()
+		accessToken, err := resp.GenerateToken(resp.Data{
+			Email: req.Email,
+			Ip:    ip,
+			TTL:   cfg.AccessTokenTTL,
+		}, cfg.JWT_ACCESS_SECRET)
+		if err != nil {
+			log.Error("failed to generate access token: ", err)
+			render.JSON(w, r, resp.Error("failed to generate access token"))
+			return
+		}
+
+		refreshToken, err := resp.GenerateToken(resp.Data{
+			Email: req.Email,
+			Ip:    ip,
+			TTL:   cfg.RefreshTokenTTL,
+		}, cfg.JWT_REFRESH_SECRET)
+		if err != nil {
+			log.Error("failed to generate refresh token", err)
+			render.JSON(w, r, resp.Error("failed to generate refresh token"))
+			return
+		}
+
 		usr := repository.User{Email: req.Email, Password: req.Password}
 		email, err := user.Registration(usr)
 
@@ -88,14 +118,20 @@ func Registration(user IUser) http.HandlerFunc {
 			render.JSON(w, r, resp.Error("failed to add user "))
 			return
 		}
-		log.Info("user added, Email", email)
+		log.Info("user added, Email: ", email)
 
-		responseOK(w, r)
+		tkn := repository.Token{Email: req.Email, Token: refreshToken}
+		err = token.InsertToken(tkn)
+		if err != nil {
+			log.Error("failed to add token ", err)
+			render.JSON(w, r, resp.Error("failed to add token "))
+			return
+		}
+
+		render.JSON(w, r, map[string]interface{}{
+			"status":        "success",
+			"access_token":  accessToken,
+			"refresh_token": refreshToken,
+		})
 	}
-}
-
-func responseOK(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, Response{
-		Response: resp.OK(),
-	})
 }

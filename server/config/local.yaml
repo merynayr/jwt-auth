@@ -9,3 +9,8 @@ http_server:
   address: "localhost:8088"
   timeout: 4s
   idle_timeout: 60s
+jwt:
+  access_token_ttl: 15m
+  refresh_token_ttl: 30m
+  JWT_ACCESS_SECRET: "jwt-secret-key"
+  JWT_REFRESH_SECRET: "jwt-refresh-secret-key"

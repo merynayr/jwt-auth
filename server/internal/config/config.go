@@ -13,6 +13,7 @@ var log = logrus.New()
 type Config struct {
 	Storage    `yaml:"storage"`
 	HTTPServer `yaml:"http_server"`
+	JWT        `yaml:"jwt"`
 }
 
 type Storage struct {
@@ -27,6 +28,13 @@ type HTTPServer struct {
 	Address     string        `yaml:"address" env-default:"localhost:8088"`
 	Timeout     time.Duration `yaml:"timeout" env-default:"4s"`
 	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"60s"`
+}
+
+type JWT struct {
+	AccessTokenTTL     time.Duration `yaml:"access_token_ttl"`
+	RefreshTokenTTL    time.Duration `yaml:"refresh_token_ttl"`
+	JWT_ACCESS_SECRET  string        `yaml:"JWT_ACCESS_SECRET"`
+	JWT_REFRESH_SECRET string        `yaml:"JWT_REFRESH_SECRET"`
 }
 
 func MustLoad() *Config {

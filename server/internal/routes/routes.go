@@ -16,8 +16,8 @@ var RegisterUserRoutes = func(router *chi.Mux, storage *repository.Storage) {
 	})
 
 	router.Get("/user", handlers.GetUser(storage))
-	router.Post("/registration", handlers.Registration(storage))
+	router.Post("/registration", handlers.Registration(storage, storage))
 	// router.Post("/login")
-	// router.Get("/refresh")
+	// router.Post("/resieve", handlers.Recieve(storage))
 	// router.Get("/login")
 }

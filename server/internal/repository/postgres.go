@@ -39,6 +39,44 @@ func InitDB(cfg Config) (*Storage, error) {
 	if err != nil {
 		log.Fatalf("Error: Unable to connect to database: %s", err)
 	}
-
+	err = createTable(db)
+	if err != nil {
+		log.Fatalf("Error: Unable to create tables : %s", err)
+	}
 	return &Storage{db: db}, nil
+}
+
+func createTable(db *sql.DB) error {
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS "Users" (
+			email VARCHAR(256) PRIMARY KEY,
+			password VARCHAR(256) NOT NULL
+		);
+	`)
+	if err != nil {
+		return fmt.Errorf("error creating table Users: %s", err)
+	}
+
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS "Token" (
+			id SERIAL PRIMARY KEY,
+			email VARCHAR(256) NOT NULL,
+			token VARCHAR(255) NOT NULL,
+			FOREIGN KEY (email) REFERENCES "Users"(email)
+		);
+	`)
+	if err != nil {
+		return fmt.Errorf("error creating table Token: %s", err)
+	}
+	return nil
+}
+
+func (db *Storage) checkExists(email string) (bool, error) {
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM Users WHERE email=$1)`
+	err := db.db.QueryRow(query, email).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }

@@ -2,6 +2,8 @@ package repository
 
 import (
 	"fmt"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -29,7 +31,7 @@ func (db *Storage) Select() ([]User, error) {
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, ErrExists)
 	}
 
 	return users, nil
@@ -37,13 +39,28 @@ func (db *Storage) Select() ([]User, error) {
 
 func (db *Storage) Registration(user User) (string, error) {
 	const op = "Registration.User"
-	query := `INSERT INTO "Users" ("Email", "Password") VALUES ($1, $2) RETURNING "Email";`
+	query := `INSERT INTO "Users" ("email", "password") VALUES ($1, $2) RETURNING "email";`
 
 	var email string
-	err := db.db.QueryRow(query, user.Email, user.Password).Scan(&email)
+	hashPassword, _ := HashPassword(user.Password)
+	err := db.db.QueryRow(query, user.Email, hashPassword).Scan(&email)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", op, ErrExists)
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	return email, nil
+}
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 3)
+	return string(bytes), err
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+
+func (db *Storage) SignIn(user User) {
+
 }

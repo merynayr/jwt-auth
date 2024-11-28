@@ -26,7 +26,6 @@ func main() {
 		log.Error("failed to init storage", err)
 		os.Exit(1)
 	}
-	_ = storage
 
 	log.Info("starting storage")
 
