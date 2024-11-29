@@ -62,6 +62,7 @@ func createTable(db *sql.DB) error {
 			id SERIAL PRIMARY KEY,
 			email VARCHAR(256) NOT NULL,
 			token VARCHAR(255) NOT NULL,
+			ip VARCHAR(33) NOT NULL,
 			FOREIGN KEY (email) REFERENCES "Users"(email)
 		);
 	`)
@@ -69,14 +70,4 @@ func createTable(db *sql.DB) error {
 		return fmt.Errorf("error creating table Token: %s", err)
 	}
 	return nil
-}
-
-func (db *Storage) checkExists(email string) (bool, error) {
-	var exists bool
-	query := `SELECT EXISTS(SELECT 1 FROM Users WHERE email=$1)`
-	err := db.db.QueryRow(query, email).Scan(&exists)
-	if err != nil {
-		return false, err
-	}
-	return exists, nil
 }

@@ -11,10 +11,20 @@ type User struct {
 	Password string
 }
 
+func (db *Storage) CheckExistsUser(email string) (bool, error) {
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM "Users" WHERE email=$1)`
+	err := db.db.QueryRow(query, email).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
 func (db *Storage) Select() ([]User, error) {
 	const op = "Repository.Select.Users"
 	users := []User{}
-	log.Info("Select")
+
 	query := `SELECT * FROM "Users"`
 	rows, err := db.db.Query(query)
 	if err != nil {
@@ -45,7 +55,7 @@ func (db *Storage) Registration(user User) (string, error) {
 	hashPassword, _ := HashPassword(user.Password)
 	err := db.db.QueryRow(query, user.Email, hashPassword).Scan(&email)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", op, err)
+		return "", fmt.Errorf("%s: %w", op, ErrExists)
 	}
 
 	return email, nil

@@ -38,7 +38,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	service, err := service.New(cfg, storage, tokenManager)
+	service, _ := service.New(cfg, storage, tokenManager)
 	router := chi.NewRouter()
 	routes.RegisterUserRoutes(router, storage, service)
 

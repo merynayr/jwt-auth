@@ -42,7 +42,6 @@ func (m *Manager) GenerateToken(data Data, secretKey string) (string, error) {
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(data.TTL).Unix(),
 			IssuedAt:  time.Now().Unix(),
-			Subject:   data.Ip,
 		},
 	}
 
@@ -56,15 +55,15 @@ func (m *Manager) GenerateToken(data Data, secretKey string) (string, error) {
 }
 
 func (m *Manager) HashToken(token string) ([]byte, error) {
-	// const op = "auth.manager.HashToken"
+	// 	const op = "auth.manager.HashToken"
 
-	// hashedToken, err := bcrypt.GenerateFromPassword([]byte(token), 3)
-	// if err != nil {
-	// 	return []byte{}, fmt.Errorf("%s: %w", op, err)
+	// 	hashedToken, err := bcrypt.GenerateFromPassword([]byte(token), 3)
+	// 	if err != nil {
+	// 		return []byte{}, fmt.Errorf("%s: %w", op, err)
+	// 	}
+
+	// 	return hashedToken, nil
 	// }
-
-	// return hashedToken, nil
-
 	// Хешируем токен с использованием SHA-256, так как токен получается больше 72 байт
 	hash := sha256.Sum256([]byte(token))
 	hashedToken := hex.EncodeToString(hash[:])
@@ -74,6 +73,11 @@ func (m *Manager) HashToken(token string) ([]byte, error) {
 
 func (m *Manager) CompareTokens(providedToken string, hashedToken []byte) bool {
 	err := bcrypt.CompareHashAndPassword(hashedToken, []byte(providedToken))
-
 	return err == nil
+	// 	hash := sha256.Sum256([]byte(providedToken))
+	// 	hashed := hex.EncodeToString(hash[:])
+	// 	fmt.Println(hashed)
+	// 	fmt.Println()
+	// 	fmt.Println(string(hashedToken))
+	// 	return hashed == string(hashedToken)
 }

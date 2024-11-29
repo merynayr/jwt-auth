@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "type": "go",
+            "name": "debug main.go",
+            "request": "launch",
+            "mode": "auto",
+            "args": [],
+            "program": "d:\\golang\\jwt-auth\\server\\cmd\\jwt_auth\\main.go"
+        },
+        {
+            "type": "go",
+            "name": "debug routes.go",
+            "request": "launch",
+            "mode": "auto",
+            "args": [],
+            "program": "d:\\golang\\jwt-auth\\server\\internal\\routes\\routes.go"
+        }
+    ]
+}
