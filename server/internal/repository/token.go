@@ -49,6 +49,5 @@ func (db *Storage) GetTokenIP(email, ip string) (string, string, error) {
 	} else if err != nil {
 		return "", "", fmt.Errorf("%s: %w", op, err)
 	}
-	fmt.Println(token, oldIP)
 	return token, oldIP, nil
 }

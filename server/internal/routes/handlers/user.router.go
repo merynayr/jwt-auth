@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/go-chi/render"
@@ -62,33 +60,37 @@ func ReceiveTokens(auth Auth) http.HandlerFunc {
 		const op = "Handler.Receive.Tokens"
 		log.Info("op", op)
 
-		var req Request
-		err := render.DecodeJSON(r.Body, &req)
-		if err != nil {
-			log.Error("failed to decode request body", err)
-			render.JSON(w, r, resp.Error("failed to decode request"))
+		// var req Request
+		// err := render.DecodeJSON(r.Body, &req)
+		// if err != nil {
+		// 	log.Error("failed to decode request body", err)
+		// 	render.JSON(w, r, resp.Error("failed to decode request"))
+		// 	return
+		// }
+		Email := r.URL.Query().Get("Email") // Извлечение параметра Email
+		if Email == "" {
+			http.Error(w, "Email parameter is required", http.StatusBadRequest)
 			return
 		}
 
-		exist, _ := auth.ExistsUser(req.Email)
+		exist, _ := auth.ExistsUser(Email)
 		ip := r.RemoteAddr
 		if exist {
-			token, oldIp, err := auth.GetTokenIP(req.Email, ip)
+			token, oldIp, err := auth.GetTokenIP(Email, ip)
 			if err != nil {
 				log.Error("failed to get Token: ", err)
 				render.JSON(w, r, resp.Error("failed to get token"))
 				return
 			}
 			flag := checkIp(ip, oldIp)
-			fmt.Println(flag, ip, oldIp)
 			if !flag {
-				SendWarningEmail(req.Email)
+				SendWarningEmail(Email)
 			} else {
 				auth.DeleteToken(token)
 			}
 		}
 
-		data := resp.Data{Email: req.Email, Ip: ip}
+		data := resp.Data{Email: Email, Ip: ip}
 		refreshToken, err := auth.GetRefreshToken(data)
 		if err != nil {
 			log.Error("failed to generate refresh token: ", err)
@@ -96,7 +98,7 @@ func ReceiveTokens(auth Auth) http.HandlerFunc {
 			return
 		}
 
-		err = auth.InsertToken(refreshToken, req.Email, ip)
+		err = auth.InsertToken(refreshToken, Email, ip)
 		if err != nil {
 			log.Error("failed to add token ", err)
 			render.JSON(w, r, resp.Error("failed to add token "))
@@ -156,7 +158,10 @@ func Registration(auth Auth) http.HandlerFunc {
 		}
 
 		log.Info("user registered: ", email)
-		r.Body = io.NopCloser(io.MultiReader(strings.NewReader(fmt.Sprintf(`{"email":"%s"}`, req.Email))))
+
+		query := r.URL.Query()
+		query.Set("Email", req.Email)
+		r.URL.RawQuery = query.Encode()
 		ReceiveTokens(auth)(w, r)
 	}
 }
@@ -179,7 +184,9 @@ func SignIn(auth Auth) http.HandlerFunc {
 			return
 		}
 
-		r.Body = io.NopCloser(io.MultiReader(strings.NewReader(fmt.Sprintf(`{"email":"%s"}`, req.Email))))
+		query := r.URL.Query()
+		query.Set("Email", req.Email)
+		r.URL.RawQuery = query.Encode()
 		ReceiveTokens(auth)(w, r)
 	}
 }
