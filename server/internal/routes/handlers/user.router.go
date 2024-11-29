@@ -60,14 +60,7 @@ func ReceiveTokens(auth Auth) http.HandlerFunc {
 		const op = "Handler.Receive.Tokens"
 		log.Info("op", op)
 
-		// var req Request
-		// err := render.DecodeJSON(r.Body, &req)
-		// if err != nil {
-		// 	log.Error("failed to decode request body", err)
-		// 	render.JSON(w, r, resp.Error("failed to decode request"))
-		// 	return
-		// }
-		Email := r.URL.Query().Get("Email") // Извлечение параметра Email
+		Email := r.URL.Query().Get("Email")
 		if Email == "" {
 			http.Error(w, "Email parameter is required", http.StatusBadRequest)
 			return
