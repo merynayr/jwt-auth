@@ -59,10 +59,9 @@ func createTable(db *sql.DB) error {
 
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS "Token" (
-			id SERIAL PRIMARY KEY,
+			guid VARCHAR(256) PRIMARY KEY,
 			email VARCHAR(256) NOT NULL,
 			token VARCHAR(255) NOT NULL,
-			ip VARCHAR(33) NOT NULL,
 			FOREIGN KEY (email) REFERENCES "Users"(email)
 		);
 	`)

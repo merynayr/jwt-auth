@@ -5,12 +5,12 @@ import (
 	"jwt-auth/server/internal/config"
 	"jwt-auth/server/internal/repository"
 	"jwt-auth/server/internal/utils"
+	"strings"
 )
 
 type Storage interface {
-	InsertToken(refreshToken string, email, ip string) error
+	InsertToken(guid, refreshToken, email string) error
 	GetToken(email string) (string, error)
-	GetTokenIP(email, ip string) (string, string, error)
 	DeleteToken(refreshToken string) error
 
 	Select() ([]repository.User, error)
@@ -22,6 +22,7 @@ type TokenManager interface {
 	GenerateToken(data utils.Data, secretKey string) (string, error)
 	HashToken(token string) ([]byte, error)
 	CompareTokens(providedToken string, hashedToken []byte) bool
+	GetClaims(tokenStr, flag string) (string, error)
 }
 
 type Auth struct {
@@ -37,7 +38,7 @@ func New(cfg *config.Config, storage Storage, tokenManager TokenManager) (*Auth,
 		tokenManager: tokenManager}, nil
 }
 
-func (a *Auth) InsertToken(refreshToken string, email, ip string) error {
+func (a *Auth) InsertToken(guid, refreshToken, email string) error {
 	const op = "service.InsertToken"
 
 	hashToken, err := a.tokenManager.HashToken(refreshToken)
@@ -45,7 +46,7 @@ func (a *Auth) InsertToken(refreshToken string, email, ip string) error {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	if err := a.storage.InsertToken(string(hashToken), email, ip); err != nil {
+	if err := a.storage.InsertToken(guid, string(hashToken), email); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
@@ -74,24 +75,24 @@ func (a *Auth) GetAccessToken(data utils.Data) (string, error) {
 	return accessToken, nil
 }
 
-func (a *Auth) DeleteToken(refreshToken string) error {
+func (a *Auth) DeleteToken(Email string) error {
 	const op = "service.DeleteToken"
 
-	err := a.storage.DeleteToken(refreshToken)
+	err := a.storage.DeleteToken(Email)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
 }
 
-func (a *Auth) GetTokenIP(email, ip string) (string, string, error) {
-	const op = "service.GetTokenIP"
+func (a *Auth) GetToken(email string) (string, error) {
+	const op = "service.GetToken"
 
-	token, ip, err := a.storage.GetTokenIP(email, ip)
+	token, err := a.storage.GetToken(email)
 	if err != nil {
-		return "", "", fmt.Errorf("%s: %w", op, err)
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
-	return token, ip, nil
+	return token, nil
 }
 
 func (a *Auth) SelectUsers() ([]repository.User, error) {
@@ -104,4 +105,24 @@ func (a *Auth) Registration(user repository.User) (string, error) {
 
 func (a *Auth) ExistsUser(email string) (bool, error) {
 	return a.storage.CheckExistsUser(email)
+}
+
+func (a *Auth) GetClaimField(tokenString, flag string) (string, error) {
+	const op = "service.GetClaimField"
+	fmt.Println(op, tokenString, flag)
+	field := flag
+	if flag == "ip" || flag == "email" {
+		flag = "sub"
+	}
+	tokenField, err := a.tokenManager.GetClaims(tokenString, flag)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+	if field == "ip" {
+		tokenField = strings.Fields(tokenField)[1]
+	} else if field == "email" {
+		tokenField = strings.Fields(tokenField)[0]
+	}
+	fmt.Println("GetClaimField ", tokenField)
+	return tokenField, err
 }

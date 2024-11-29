@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
 	"jwt-auth/server/internal/config"
@@ -29,15 +30,17 @@ type Response struct {
 }
 
 type Auth interface {
-	InsertToken(refreshToken string, email, ip string) error
+	InsertToken(guid, refreshToken, email string) error
 	GetRefreshToken(data utils.Data) (string, error)
 	GetAccessToken(data utils.Data) (string, error)
-	GetTokenIP(email, ip string) (string, string, error)
-	DeleteToken(refreshToken string) error
+	GetToken(email string) (string, error)
+	DeleteToken(Email string) error
 
 	SelectUsers() ([]repository.User, error)
 	Registration(user repository.User) (string, error)
 	ExistsUser(email string) (bool, error)
+
+	GetClaimField(tokenString, flag string) (string, error)
 }
 
 func GetUser(auth Auth) http.HandlerFunc {
@@ -68,22 +71,12 @@ func ReceiveTokens(auth Auth) http.HandlerFunc {
 
 		exist, _ := auth.ExistsUser(Email)
 		ip := r.RemoteAddr
-		if exist {
-			token, oldIp, err := auth.GetTokenIP(Email, ip)
-			if err != nil {
-				log.Error("failed to get Token: ", err)
-				render.JSON(w, r, resp.Error("failed to get token"))
-				return
-			}
-			flag := checkIp(ip, oldIp)
-			if !flag {
-				SendWarningEmail(Email)
-			} else {
-				auth.DeleteToken(token)
-			}
+		if exist && r.RequestURI != "/api/SignUp" {
+			auth.DeleteToken(Email)
 		}
 
-		data := resp.Data{Email: Email, Ip: ip}
+		guid := uuid.NewString()
+		data := resp.Data{Guid: guid, Email: Email, Ip: ip}
 		refreshToken, err := auth.GetRefreshToken(data)
 		if err != nil {
 			log.Error("failed to generate refresh token: ", err)
@@ -91,7 +84,7 @@ func ReceiveTokens(auth Auth) http.HandlerFunc {
 			return
 		}
 
-		err = auth.InsertToken(refreshToken, Email, ip)
+		err = auth.InsertToken(guid, refreshToken, Email)
 		if err != nil {
 			log.Error("failed to add token ", err)
 			render.JSON(w, r, resp.Error("failed to add token "))
@@ -189,7 +182,7 @@ func setCookies(w http.ResponseWriter, refreshToken string, accessToken string, 
 		Name:     "httpOnly_cookie",
 		Value:    refreshToken,
 		Expires:  time.Now().Add(refreshTokenTTL),
-		Path:     "/api/Auth",
+		Path:     "/api",
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &httpOnlyCookie)
@@ -198,7 +191,7 @@ func setCookies(w http.ResponseWriter, refreshToken string, accessToken string, 
 		Name:    "regular_cookie",
 		Value:   accessToken,
 		Expires: time.Now().Add(accessTokenTTL),
-		Path:    "/api/Auth",
+		Path:    "/api",
 	}
 	http.SetCookie(w, &regularCookie)
 }
