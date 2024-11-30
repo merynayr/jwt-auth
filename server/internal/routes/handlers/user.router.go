@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
@@ -33,14 +35,16 @@ type Auth interface {
 	InsertToken(guid, refreshToken, email string) error
 	GetRefreshToken(data utils.Data) (string, error)
 	GetAccessToken(data utils.Data) (string, error)
-	GetToken(email string) (string, error)
+	GetToken(GUID string) (string, error)
 	DeleteToken(Email string) error
 
 	SelectUsers() ([]repository.User, error)
 	Registration(user repository.User) (string, error)
 	ExistsUser(email string) (bool, error)
 
-	GetClaimField(tokenString, flag string) (string, error)
+	GetClaimField(tokenString string) (jwt.MapClaims, error)
+	CompareTokens(providedToken string, hashedToken string) bool
+	ValidToken(refreshToken string, rtClaims jwt.MapClaims) bool
 }
 
 func GetUser(auth Auth) http.HandlerFunc {
@@ -65,7 +69,8 @@ func ReceiveTokens(auth Auth) http.HandlerFunc {
 
 		Email := r.URL.Query().Get("Email")
 		if Email == "" {
-			http.Error(w, "Email parameter is required", http.StatusBadRequest)
+			log.Error("Email parameter is required")
+			render.JSON(w, r, resp.Error("Email parameter is required"))
 			return
 		}
 
@@ -107,6 +112,69 @@ func ReceiveTokens(auth Auth) http.HandlerFunc {
 			"access_token":  accessToken,
 			"refresh_token": refreshToken,
 		})
+	}
+}
+
+func RefreshTokens(auth Auth) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		const op = "Handler.Refresh.Tokens"
+		log.Info("op", op)
+
+		refreshToken := r.URL.Query().Get("RefreshToken")
+		if refreshToken == "" {
+			log.Error("RefreshToken parameter is required")
+			render.JSON(w, r, resp.Error("RefreshToken parameter is required"))
+			return
+		}
+
+		rtClaims, err := auth.GetClaimField(refreshToken)
+		if err != nil {
+			log.Error("Failed to get Claim")
+			render.JSON(w, r, resp.Error("Failed to get Claim"))
+			return
+		}
+
+		accessToken, err := r.Cookie("regular_cookie")
+		if err != nil {
+			log.Error("Failed to get regular_cookie")
+			render.JSON(w, r, resp.Error("Failed to get cookie"))
+			return
+		}
+
+		atClaims, err := auth.GetClaimField(accessToken.Value)
+		if err != nil {
+			log.Error("Failed to get Claim")
+			render.JSON(w, r, resp.Error("Failed to get Claim"))
+			return
+		}
+
+		// Насколько я понял, regresh token должен быть привязан к клиенту,
+		// но не к access токену, так что странно так делать,
+		// тем более что куки умирают в то же время, что и токены
+		if rtClaims["GUID"] != atClaims["GUID"] {
+			log.Error("Токены должны быть обоюдно связаны")
+			render.JSON(w, r, resp.Error("Токены должны быть обоюдно связаны"))
+			return
+		}
+
+		Subject := fmt.Sprintf("%s", rtClaims["sub"])
+		ip := strings.Fields(Subject)[1]
+		Email := strings.Fields(Subject)[0]
+		if ip != r.RemoteAddr {
+			log.Warning("В аккаунт вошли с неизвестного устройства")
+			SendWarningEmail(Email)
+		}
+
+		if ok := auth.ValidToken(refreshToken, rtClaims); !ok {
+			log.Error("Токен не прошёл валидацию")
+			render.JSON(w, r, resp.Error("Токен не прошёл валидацию"))
+			return
+		}
+
+		query := r.URL.Query()
+		query.Set("Email", Email)
+		r.URL.RawQuery = query.Encode()
+		ReceiveTokens(auth)(w, r)
 	}
 }
 
@@ -194,10 +262,6 @@ func setCookies(w http.ResponseWriter, refreshToken string, accessToken string, 
 		Path:    "/api",
 	}
 	http.SetCookie(w, &regularCookie)
-}
-
-func checkIp(currentIP, IP string) bool {
-	return currentIP == IP
 }
 
 func SendWarningEmail(email string) error {

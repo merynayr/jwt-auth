@@ -22,6 +22,7 @@ var RegisterUserRoutes = func(router *chi.Mux, storage *repository.Storage, serv
 		r.Post("/SignUp", handlers.Registration(service))
 		r.Post("/Auth", handlers.SignIn(service))
 		r.Post("/Recieve", handlers.ReceiveTokens(service))
+		r.Post("/Refresh", handlers.RefreshTokens(service))
 	})
 
 }

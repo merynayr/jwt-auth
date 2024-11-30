@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Manager struct {
@@ -73,34 +72,26 @@ func (m *Manager) HashToken(token string) ([]byte, error) {
 	return []byte(hashedToken), nil
 }
 
-func (m *Manager) CompareTokens(providedToken string, hashedToken []byte) bool {
-	err := bcrypt.CompareHashAndPassword(hashedToken, []byte(providedToken))
-	return err == nil
-	// 	hash := sha256.Sum256([]byte(providedToken))
-	// 	hashed := hex.EncodeToString(hash[:])
-	// 	fmt.Println(hashed)
-	// 	fmt.Println()
-	// 	fmt.Println(string(hashedToken))
-	// 	return hashed == string(hashedToken)
+func (m *Manager) CompareTokens(providedToken string, hashedToken string) bool {
+	// err := bcrypt.CompareHashAndPassword(hashedToken, []byte(providedToken))
+	// return err == nil
+	hash := sha256.Sum256([]byte(providedToken))
+	hashed := hex.EncodeToString(hash[:])
+	return hashed == hashedToken
 }
 
-func (m *Manager) GetClaims(tokenStr, flag string) (string, error) {
+func (m *Manager) GetClaims(tokenStr string) (jwt.MapClaims, error) {
 	const op = "service.GetClaims"
-	fmt.Println(op, tokenStr, flag)
-	var name string
+
 	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		name = fmt.Sprint(claims["sub"])
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	fmt.Println("GetClaims ", name)
 
-	if name == "" {
-		return "", fmt.Errorf("invalid token payload")
-	}
-	fmt.Println("Name ", name)
-	return name, nil
+	return claims, nil
 }

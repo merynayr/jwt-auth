@@ -14,10 +14,10 @@ func (db *Storage) InsertToken(guid, refreshToken, email string) error {
 	return err
 }
 
-func (db *Storage) GetToken(email string) (string, error) {
+func (db *Storage) GetToken(GUID string) (string, error) {
 	const op = "Get.Token"
-	query := `SELECT token FROM "Token" WHERE email = $1`
-	row := db.db.QueryRow(query, email)
+	query := `SELECT token FROM "Token" WHERE guid = $1`
+	row := db.db.QueryRow(query, GUID)
 
 	var token string
 	err := row.Scan(&token)
