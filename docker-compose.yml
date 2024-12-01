@@ -1,0 +1,29 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jwt_auth_app
+    ports:
+      - "8088:8088"
+    environment:
+      CONFIG_PATH: "/server/config/local.yaml"
+    volumes:
+      - ./server/config:/app/server/config
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    container_name: jwt_auth_db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

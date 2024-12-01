@@ -76,8 +76,10 @@ func ReceiveTokens(auth Auth) http.HandlerFunc {
 
 		exist, _ := auth.ExistsUser(Email)
 		ip := r.RemoteAddr
-		if exist && r.RequestURI != "/api/SignUp" {
-			auth.DeleteToken(Email)
+		if exist {
+			if r.RequestURI != "/api/SignUp" {
+				auth.DeleteToken(Email)
+			}
 		} else {
 			log.Error("Email parameter is required")
 			render.JSON(w, r, resp.Error("Email parameter is required"))

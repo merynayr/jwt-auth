@@ -38,7 +38,7 @@ type JWT struct {
 }
 
 func MustLoad() *Config {
-	configPath := "./server/config/local.yaml"
+	configPath := os.Getenv("CONFIG_PATH")
 	file, err := os.Open(configPath)
 	if err != nil {
 		log.Fatalf("Config file does not exist: %s", configPath)
