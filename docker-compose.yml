@@ -8,6 +8,12 @@ services:
       - "8088:8088"
     environment:
       CONFIG_PATH: "/server/config/local.yaml"
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_SSLMODE: ${DB_SSLMODE}
     volumes:
       - ./server/config:/app/server/config
     depends_on:
@@ -18,10 +24,6 @@ services:
     container_name: jwt_auth_db
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

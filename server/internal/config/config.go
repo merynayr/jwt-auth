@@ -53,7 +53,7 @@ func MustLoad() *Config {
 		log.Fatalf("Cannot read config: %s", err)
 	}
 
-	// setFromEnv(&cfg)
+	setFromEnv(&cfg)
 
 	return &cfg
 }
