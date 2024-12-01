@@ -78,6 +78,10 @@ func ReceiveTokens(auth Auth) http.HandlerFunc {
 		ip := r.RemoteAddr
 		if exist && r.RequestURI != "/api/SignUp" {
 			auth.DeleteToken(Email)
+		} else {
+			log.Error("Email parameter is required")
+			render.JSON(w, r, resp.Error("Email parameter is required"))
+			return
 		}
 
 		guid := uuid.NewString()
@@ -249,7 +253,7 @@ func setCookies(w http.ResponseWriter, refreshToken string, accessToken string, 
 	httpOnlyCookie := http.Cookie{
 		Name:     "httpOnly_cookie",
 		Value:    refreshToken,
-		Expires:  time.Now().Add(refreshTokenTTL),
+		Expires:  time.Now().Add(refreshTokenTTL * 2),
 		Path:     "/api",
 		HttpOnly: true,
 	}
@@ -258,7 +262,7 @@ func setCookies(w http.ResponseWriter, refreshToken string, accessToken string, 
 	regularCookie := http.Cookie{
 		Name:    "regular_cookie",
 		Value:   accessToken,
-		Expires: time.Now().Add(accessTokenTTL),
+		Expires: time.Now().Add(accessTokenTTL * 2),
 		Path:    "/api",
 	}
 	http.SetCookie(w, &regularCookie)

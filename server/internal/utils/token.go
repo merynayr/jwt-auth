@@ -65,7 +65,9 @@ func (m *Manager) HashToken(token string) ([]byte, error) {
 	// 	return hashedToken, nil
 	// }
 
-	// Хешируем токен с использованием SHA-256, так как токен получается больше 72 байт
+	// Хешируем токен с использованием SHA-256,
+	// так как токен получается больше 72 байт,
+	// а bcrypt не работает с большими размерами
 	hash := sha256.Sum256([]byte(token))
 	hashedToken := hex.EncodeToString(hash[:])
 
