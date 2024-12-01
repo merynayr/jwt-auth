@@ -53,5 +53,16 @@ func MustLoad() *Config {
 		log.Fatalf("Cannot read config: %s", err)
 	}
 
+	// setFromEnv(&cfg)
+
 	return &cfg
+}
+
+func setFromEnv(cfg *Config) {
+	cfg.Storage.Host = os.Getenv("DB_HOST")
+	cfg.Storage.User = os.Getenv("DB_USER")
+	cfg.Storage.Password = os.Getenv("DB_PASSWORD")
+	cfg.Storage.DBName = os.Getenv("DB_NAME")
+	cfg.Storage.SSLMode = os.Getenv("DB_SSLMODE")
+	cfg.Storage.Port = os.Getenv("DB_PORT")
 }

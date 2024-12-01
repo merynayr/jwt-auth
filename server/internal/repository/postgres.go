@@ -32,8 +32,7 @@ type Storage struct {
 }
 
 func InitDB(cfg Config) (*Storage, error) {
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s", cfg.Host, cfg.User, cfg.Password, cfg.DBName, cfg.Port, cfg.SSLMode)
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode)
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {

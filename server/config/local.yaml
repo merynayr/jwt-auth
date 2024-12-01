@@ -1,6 +1,6 @@
 storage: 
-  Host: "host.docker.internal"
-  Port: "5433"
+  Host: "db"
+  Port: "5432"
   User: "postgres"
   Password: "1"
   DBName: "User"
