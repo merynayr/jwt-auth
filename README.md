@@ -29,3 +29,15 @@ Payload токенов должен содержать сведения об ip 
 1. Запустить Docker Desktop
 2. Прописать в CLI: docker compose up -d
 
+## Реализация
+
+Есть 4 маршрута:
+1. Вспомогательные
+- 1.1 localhost:8088/user - Просто выводит всех юзеров
+- 1.2 localhost:8088/api/SignUp - Регистрирует пользователя, требует ввода "Email" и "Password"
+- 1.3 localhost:8088/api/Auth - Авторизация пользователя, требует ввода "Email" и "Password"
+
+2. Основные
+- 2.1 localhost:8088/api/Recieve - Выдаёт пользователю Access и Refresh токены, требует установить параметр запроса email существующего пользователя
+- 2.2 localhost:8088/api/Refresh - выполняет Refresh операцию на пару Access, Refresh токенов, требует указать в параметре запроса Refresh токен
+ 
