@@ -1,12 +1,11 @@
 package utils
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Manager struct {
@@ -55,31 +54,24 @@ func (m *Manager) GenerateToken(data Data, secretKey string) (string, error) {
 }
 
 func (m *Manager) HashToken(token string) ([]byte, error) {
-	// 	const op = "auth.manager.HashToken"
+	const op = "auth.manager.HashToken"
 
-	// 	hashedToken, err := bcrypt.GenerateFromPassword([]byte(token), bcrypt.DefaultCost)
-	// 	if err != nil {
-	// 		return []byte{}, fmt.Errorf("%s: %w", op, err)
-	// 	}
+	rtClaims, _ := m.GetClaims(token)
+	str := fmt.Sprintf("%s", rtClaims["GUID"])
+	hashedToken, err := bcrypt.GenerateFromPassword([]byte(str), bcrypt.DefaultCost)
+	if err != nil {
+		return []byte{}, fmt.Errorf("%s: %w", op, err)
+	}
 
-	// 	return hashedToken, nil
-	// }
-
-	// Хешируем токен с использованием SHA-256,
-	// так как токен получается больше 72 байт,
-	// а bcrypt не работает с большими размерами
-	hash := sha256.Sum256([]byte(token))
-	hashedToken := hex.EncodeToString(hash[:])
-
-	return []byte(hashedToken), nil
+	return hashedToken, nil
 }
 
 func (m *Manager) CompareTokens(providedToken string, hashedToken string) bool {
-	// err := bcrypt.CompareHashAndPassword(hashedToken, []byte(providedToken))
-	// return err == nil
-	hash := sha256.Sum256([]byte(providedToken))
-	hashed := hex.EncodeToString(hash[:])
-	return hashed == hashedToken
+	rtClaims, _ := m.GetClaims(providedToken)
+	str := fmt.Sprintf("%s", rtClaims["GUID"])
+
+	err := bcrypt.CompareHashAndPassword([]byte(hashedToken), []byte(str))
+	return err == nil
 }
 
 func (m *Manager) GetClaims(tokenStr string) (jwt.MapClaims, error) {
