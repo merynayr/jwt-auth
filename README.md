@@ -56,3 +56,14 @@ Payload токенов должен содержать сведения об ip 
 4. Refresh операцию на пару Access, Refresh токенов
 ![/api/Refresh](image-4.png)
 
+
+### Негативные варианты
+
+1. Попытка использовать чужой Refresh токен
+![alt text](image-5.png)
+
+2. Попытка использовать токен с неправильной подписью
+![alt text](image-6.png)
+
+3. Токен протух 
+![alt text](image-7.png)
