@@ -38,6 +38,7 @@ func InitDB(cfg Config) (*Storage, error) {
 	if err != nil {
 		log.Fatalf("Error: Unable to connect to database: %s", err)
 	}
+
 	err = createTable(db)
 	if err != nil {
 		log.Fatalf("Error: Unable to create tables : %s", err)
