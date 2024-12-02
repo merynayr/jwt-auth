@@ -44,26 +44,26 @@ Payload токенов должен содержать сведения об ip 
 ## Демонстрация
 
 1. Регистрация пользователя
-![Регистрация пользователя](image.png)
-![Как это выглядит в БД](image-1.png)
+![Регистрация пользователя](screenshots/image.png)
+![Как это выглядит в БД](screenshots/image-1.png)
 
 2. Авторизация пользователя
-![Авторизация пользователя](image-2.png)
+![Авторизация пользователя](screenshots/image-2.png)
 
 3. Выдача Access и Refresh токенов
-![/api/Recieve](image-3.png)
+![/api/Recieve](screenshots/image-3.png)
 
 4. Refresh операцию на пару Access, Refresh токенов
-![/api/Refresh](image-4.png)
+![/api/Refresh](screenshots/image-4.png)
 
 
 ### Негативные варианты
 
 1. Попытка использовать чужой Refresh токен
-![alt text](image-5.png)
+![alt text](screenshots/image-5.png)
 
 2. Попытка использовать токен с неправильной подписью
-![alt text](image-6.png)
+![alt text](screenshots/image-6.png)
 
 3. Токен протух 
-![alt text](image-7.png)
+![alt text](screenshots/image-7.png)
